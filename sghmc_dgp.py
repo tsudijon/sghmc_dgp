@@ -61,13 +61,18 @@ class DGP(BaseModel):
         N = X.shape[0]
 
         self.layers = []
-        X_running = X.copy()
+        X_running = X.copy() # what is X_running? It's not used anywhere else in the code?
+
+        # create the GP layers
         for l in range(n_layers):
             outputs = self.kernels[l+1].input_dim if l+1 < n_layers else Y.shape[1]
             self.layers.append(Layer(self.kernels[l], outputs, n_inducing, fixed_mean=(l+1 < n_layers), X=X_running))
             X_running = np.matmul(X_running, self.layers[-1].mean)
 
+        # create the base model; variables are the inducing outputs in each layer.
         super().__init__(X, Y, [l.U for l in self.layers], minibatch_size, window_size)
+
+
         self.f, self.fmeans, self.fvars = self.propagate(self.X_placeholder)
         self.y_mean, self.y_var = self.likelihood.predict_mean_and_var(self.fmeans[-1], self.fvars[-1])
 
@@ -75,14 +80,21 @@ class DGP(BaseModel):
         self.log_likelihood = self.likelihood.predict_density(self.fmeans[-1], self.fvars[-1], self.Y_placeholder)
 
         self.nll = - tf.reduce_sum(self.log_likelihood) / tf.cast(tf.shape(self.X_placeholder)[0], tf.float64) \
-                   - (self.prior / N)
+                   - (self.prior / N) # what is this? nll?
 
+
+        ### set up the graph for the monte carlo step.
         self.generate_update_step(self.nll, epsilon, mdecay)
+
+        # what does this do?
         self.adam = tf.train.AdamOptimizer(adam_lr)
         self.hyper_train_op = self.adam.minimize(self.nll)
 
+
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
+
+        # i.e. add ops to initialize variables in the graph; doesn't start training
         self.session = tf.Session(config=config)
         init_op = tf.global_variables_initializer()
         self.session.run(init_op)
@@ -90,10 +102,12 @@ class DGP(BaseModel):
     def predict_y(self, X, S):
         assert S <= len(self.posterior_samples)
         ms, vs = [], []
+
+        # runs the computational graph forward to obtain posterior samples? for the specified number of times we desire.
         for i in range(S):
             feed_dict = {self.X_placeholder: X}
             feed_dict.update(self.posterior_samples[i])
-            m, v = self.session.run((self.y_mean, self.y_var), feed_dict=feed_dict)
+            m, v = self.session.run((self.y_mean, self.y_var), feed_dict=feed_dict) # execute the computational graph; return y_mean, y_var.
             ms.append(m)
             vs.append(v)
         return np.stack(ms, 0), np.stack(vs, 0)

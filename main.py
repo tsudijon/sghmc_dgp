@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import norm
 import pandas
 
-from models import RegressionModel
+from models import RegressionModel, ClassificationModel
 
 path = './data/kin8nm.csv'
 data = pandas.read_csv(path, header=None).values
@@ -37,4 +37,8 @@ model.fit(X, Y)
 
 m, v = model.predict(Xs)
 print('MSE', np.mean(np.square(Ys - m)))
-print('MLL', np.mean(model.calculate_density(Xs, Ys)))
+print('MLL', np.mean(model.calculate_density(Xs, Ys))) # what does calculate density do?
+
+# wgat are m, v
+
+

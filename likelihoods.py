@@ -15,17 +15,31 @@ class Gaussian(object):
         return self.logdensity(Y, F, self.variance)
 
     def conditional_mean(self, F):
+        '''
+        mean of the conditional p(y|f)?
+        '''
         return tf.identity(F)
 
     def conditional_variance(self, F):
+        '''
+        variance of the conditional p(y|f)?
+        '''
         return tf.fill(tf.shape(F), tf.squeeze(self.variance))
 
     def predict_mean_and_var(self, Fmu, Fvar):
-        return tf.identity(Fmu), Fvar + self.variance
+        '''
 
-    def predict_density(self, Fmu, Fvar, Y):
-        return self.logdensity(Y, Fmu, Fvar + self.variance)
+        '''
+        return tf.identity(Fmu), Fvar + self.variance # why do we add the variance?
+
+    def predict_density(self, Fmu, Fvar, Y): 
+        '''
+        This outputs the log density?? Are we focusing on the conditional density or the prediction density?
+        '''
+        return self.logdensity(Y, Fmu, Fvar + self.variance) # why do we add the variance?
 
     def variational_expectations(self, Fmu, Fvar, Y):
         return -0.5 * np.log(2 * np.pi) - 0.5 * tf.log(self.variance) \
                - 0.5 * (tf.square(Y - Fmu) + Fvar) / self.variance
+
+

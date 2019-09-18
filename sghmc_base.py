@@ -3,6 +3,11 @@ import tensorflow as tf
 
 
 class BaseModel(object):
+    '''
+    Class variables:
+    - N: number of training examples
+    - minibatch size: size of the batch
+    '''
     def __init__(self, X, Y, vars, minibatch_size, window_size):
         self.X_placeholder = tf.placeholder(tf.float64, shape=[None, X.shape[1]])
         self.Y_placeholder = tf.placeholder(tf.float64, shape=[None, Y.shape[1]])
@@ -10,7 +15,7 @@ class BaseModel(object):
         self.Y = Y
         self.N = X.shape[0]
         self.vars = vars
-        self.minibatch_size = min(minibatch_size, self.N)
+        self.minibatch_size = min(minibatch_size, self.N) 
         self.data_iter = 0
         self.window_size = window_size
         self.window = []
@@ -51,7 +56,7 @@ class BaseModel(object):
             sample_updates.append((theta, theta_t))
             sample_updates.append((p, p_t))
 
-        self.sample_op = [tf.assign(var, var_t) for var, var_t in sample_updates]
+        self.sample_op = [tf.assign(var, var_t) for var, var_t in sample_updates] # tf.assign creates a node that will assigna new value to a variable
         self.burn_in_op = [tf.assign(var, var_t) for var, var_t in burn_in_updates + sample_updates]
 
     def reset(self, X, Y):
@@ -59,6 +64,9 @@ class BaseModel(object):
         self.data_iter = 0
 
     def get_minibatch(self):
+        '''
+        Subsets the input data into a minibatch: samples with replacement
+        '''
         assert self.N >= self.minibatch_size
         if self.N == self.minibatch_size:
             return self.X, self.Y
@@ -108,8 +116,12 @@ class BaseModel(object):
         self.session.run(self.hyper_train_op, feed_dict=feed_dict)
 
     def print_sample_performance(self, posterior=False):
+        '''
+        Returns the MLL (mean log likelihood?) every 100 or so iterations. Gets a random minibatch; 
+        computes the log likelihood ; takes the average
+        '''
         X_batch, Y_batch = self.get_minibatch()
-        feed_dict = {self.X_placeholder: X_batch, self.Y_placeholder: Y_batch}
+        feed_dict = {self.X_placeholder: X_batch, self.Y_placeholder: Y_batch} # what is a feed dict?
         if posterior:
             feed_dict.update(np.random.choice(self.posterior_samples))
         mll = np.mean(self.session.run((self.log_likelihood), feed_dict=feed_dict), 0)
