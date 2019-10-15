@@ -65,7 +65,7 @@ class DGP(BaseModel):
 
         # create the GP layers
         for l in range(n_layers):
-            outputs = self.kernels[l+1].input_dim if l+1 < n_layers else Y.shape[1]
+            outputs = self.kernels[l+1].input_dim if l+1 < n_layers else Y.shape[1] # change the shape of the network here; where is the link function placed?
             self.layers.append(Layer(self.kernels[l], outputs, n_inducing, fixed_mean=(l+1 < n_layers), X=X_running))
             X_running = np.matmul(X_running, self.layers[-1].mean)
 

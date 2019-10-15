@@ -11,7 +11,7 @@ import gpflow
 class ClassificationModel(object):
     def __init__(self, depth):
         class ARGS:
-            num_inducing = 50
+            num_inducing = 30
             iterations = 10000
             minibatch_size = 10
             window_size = 100
